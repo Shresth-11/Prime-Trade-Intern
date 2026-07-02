@@ -1,118 +1,79 @@
-# 📌 Primetrade.ai Backend Assignment: Secure REST API & Task Space
+# Primetrade.ai - Task Workspace
 
-Welcome to **Primetask**, a high-fidelity task management solution built as a project assignment for **Primetrade.ai**. This project implements a secure, modular REST API versioned under `/api/v1` utilizing **Node.js**, **Express**, and **SQLite (via Sequelize)**, coupled with a dark-themed glassmorphism **Single Page Application (SPA)** dashboard.
+This is a clean, secure REST API and frontend task management space designed for **Primetrade.ai**. 
+
+The project features a **Node.js/Express** backend, a local **SQLite** database managed via **Sequelize ORM**, and a responsive, vanilla JavaScript Single Page Application (SPA) dashboard. 
 
 ---
 
-## ⚡ Features Implemented
+## 🎨 Theme & Design Philosophy
+This workspace features a **Light Minimalist Theme** by default. Built using high-contrast slate and zinc tones (`#f9f9fb`), subtle hairline borders, and elegant transitions, the layout is modeled after high-end professional development tools.
 
-1. **User Authentication & Authorization**:
-   - Registration and Login APIs with password hashing using `bcryptjs`.
-   - Role-Based Access Control (RBAC) with `user` and `admin` scopes.
-   - Stateless session handling using JWT (`jsonwebtoken`) passed in headers.
-2. **Entity CRUD Actions**:
-   - Secondary entity (`Task`) supporting full CRUD functionality.
-   - Standard users can only view, edit, and delete their own tasks.
-   - Administrators can view, filter, edit, and delete tasks belonging to any user.
-3. **Admin Controls**:
-   - Administrators can list all registered users.
-   - Administrators can modify user roles (standard user vs administrator) dynamically.
-4. **Input Sanitization & Centralized Validation**:
-   - Checked schemas for incoming data using `express-validator` to prevent SQL Injection and malformed requests.
-5. **Interactive Developer Console / API Log Monitor**:
-   - Real-time HTTP log feed built right into the frontend dashboard showing method, status codes, JWT headers, request payload, and response JSON as you click buttons in the UI.
-6. **Winston Structured Logger**:
-   - Automated routing of log statements to Console, `logs/combined.log`, and `logs/error.log` for analytics.
+* **Mode Toggling**: The interface includes a header control to toggle between the minimalist light mode and a custom dark mode.
+* **API Log Monitor**: A collapsible developer sidebar is built directly into the dashboard. It intercepts frontend fetch requests and updates a live console feed with HTTP methods, status codes, JWT headers, request payloads, and response payloads.
+
+---
+
+## ⚡ Core Features
+1. **User Accounts & RBAC**: Password hashing via `bcryptjs` and token validation via JWT. Supports `user` and `admin` roles.
+2. **Task Board**: Task cards support complete CRUD actions. Normal users manage their own tasks, while administrators have visibility and modify permissions for all tasks.
+3. **Admin Telemetry Panel**: An interactive table that displays registered users and lets administrators promote or demote user roles dynamically in real-time.
+4. **Console Logging**: A structured `Winston` logger logs request cycles locally (`logs/combined.log` and `logs/error.log`).
 
 ---
 
 ## 🏗️ Tech Stack
-
-- **Backend Framework**: Node.js & Express (ESM Import/Export)
-- **Database ORM**: Sequelize
-- **Database Engine**: SQLite (Zero config, local single-file database)
-- **Log Management**: Winston
-- **Security Utilities**: bcryptjs, jsonwebtoken, express-validator
-- **Frontend Layer**: Vanilla HTML5 / CSS3 / JavaScript SPA (Served statically on port `3000`)
+* **Server**: Node.js & Express (ESM modular imports)
+* **Database**: SQLite (Zero config, local single-file storage)
+* **ORM**: Sequelize
+* **Validation**: express-validator (handles input schema validation)
+* **Logging**: Winston logger
+* **Frontend**: Vanilla HTML5, CSS3, and JavaScript SPA (Served statically by the Express application)
 
 ---
 
-## 🚀 Setup & Launch Guide
+## 🚀 Setup & Launch
 
-### System Requirements
-- Node.js version `v18` or higher (Tested on `v22.12.0`)
-- npm version `v9` or higher (Tested on `11.1.0`)
+### Requirements
+* Node.js `v18` or higher
+* npm `v9` or higher
 
-### Installation & Run
-
-1. Clone or download the repository, then navigate to the workspace directory.
-2. Install npm packages:
+### Installation
+1. Clone the repository and enter the directory.
+2. Install the package dependencies:
    ```bash
    npm install
    ```
-3. Boot up the server (will automatically run Sequelize database sync and migrations):
-   - **Production / Standard Mode**:
-     ```bash
-     npm start
-     ```
-   - **Development Auto-Reload Mode**:
+3. Start the application:
+   * **Development mode (with auto-reload)**:
      ```bash
      npm run dev
      ```
-4. Open your browser and navigate to **`http://localhost:3000`** to view the live dashboard.
+   * **Standard mode**:
+     ```bash
+     npm start
+     ```
+4. Access the workspace at: **`http://localhost:3000`**
+
+### 🔑 Demo Credentials
+You can register new accounts in the UI or use these seeded demo accounts:
+* **Standard User**: `user@example.com` / `password123`
+* **Admin User**: `admin@example.com` / `password123`
+*(Note: Any new account registered with an email containing the string "admin" is automatically assigned the Administrator role for testing convenience).*
 
 ---
 
-## 🧪 Quick Test Credentials
+## 🌐 REST API Endpoints
 
-- **Standard User**: 
-  - Email: `user@example.com`
-  - Password: `password123`
-- **Administrator**:
-  - Email: `admin@example.com`
-  - Password: `password123`
-  *(Any registered email containing the word `admin` is automatically promoted to the Admin role on signup for testing convenience).*
-
----
-
-## 📝 Scalability & Architecture Note
-
-As request volume increases, a single-instance monolith utilizing SQLite is insufficient. Here is the migration roadmap to scale this system for enterprise loads:
-
-### 1. Database Scaling (Relational Migrations)
-- **Engine Transition**: Migrate from SQLite to **PostgreSQL** or **Amazon RDS** to support high concurrent connection counts, transactional row-locking, and write replication.
-- **Read/Write Splitting**: Set up a primary database node for writes (inserting users/tasks) and multiple read-replicas for fetch queries (`GET /api/v1/tasks`).
-- **Indexing**: Apply database indexes on high-frequency search fields, specifically `User.email` (unique index) and `Task.userId` (foreign key index) to prevent full-table scans.
-
-### 2. Microservices Architecture
-To isolate computational loads and scale modules independently:
-- **Authentication Service**: Deploy a separate auth service (or integrate an OAuth2 identity server like Keycloak/Auth0) to sign and verify JWT tokens.
-- **Task Management Service**: Separate the Task CRUD logic into its own service.
-- **Communication Broker**: Integrate a message queue like **RabbitMQ** or **Apache Kafka** to handle async tasks like sending emails upon signup.
-
-### 3. Caching Layer (Redis)
-- Cache frequent `GET /api/v1/tasks` listings in a **Redis** in-memory store.
-- Use a cache-invalidation strategy (e.g., delete user task cache upon `POST`, `PUT`, or `DELETE` requests).
-- Rate Limiting: Use Redis to track user IP/token request quotas, returning `429 Too Many Requests` to prevent API denial-of-service.
-
-### 4. Load Balancing & State Management
-- Deploy the stateless Express server across multiple containers or VMs.
-- Place an **Nginx** or **AWS Application Load Balancer (ALB)** in front to distribute incoming traffic round-robin.
-- Since authorization is stateless (JWT), requests can be routed to any backend server node without losing user context.
-
----
-
-## 🌐 API Endpoint Documentation
-
-| Method | Endpoint | Authorization | Description |
+| Method | Endpoint | Access | Details |
 | :--- | :--- | :--- | :--- |
-| **POST** | `/api/v1/auth/register` | Public | Create a user. Accepts `{ name, email, password, role }` |
-| **POST** | `/api/v1/auth/login` | Public | Logs in a user. Returns `{ status, token, data }` |
-| **GET** | `/api/v1/auth/me` | User / Admin | Returns current user profile info |
-| **POST** | `/api/v1/tasks` | User / Admin | Create a task. Accepts `{ title, description, status }` |
-| **GET** | `/api/v1/tasks` | User / Admin | User gets their own tasks. Admin gets all tasks |
-| **GET** | `/api/v1/tasks/:id` | User / Admin | Fetch specific task. Owners & Admins only |
-| **PUT** | `/api/v1/tasks/:id` | User / Admin | Edit title, desc, status. Owners & Admins only |
-| **DELETE** | `/api/v1/tasks/:id` | User / Admin | Deletes a task card. Owners & Admins only |
-| **GET** | `/api/v1/users` | Admin Only | Lists all accounts, emails, and active task counts |
-| **PUT** | `/api/v1/users/:id/role` | Admin Only | Promotes/demotes user role. Accepts `{ role: 'admin'/'user' }` |
+| **POST** | `/api/v1/auth/register` | Public | Register user account. Body: `{ name, email, password, role }` |
+| **POST** | `/api/v1/auth/login` | Public | Log in user. Returns JWT and user payload |
+| **GET** | `/api/v1/auth/me` | Logged In | Retrieve current user profile details |
+| **POST** | `/api/v1/tasks` | Logged In | Create task. Body: `{ title, description, status }` |
+| **GET** | `/api/v1/tasks` | Logged In | Get tasks (Normal users: own tasks; Admins: all tasks) |
+| **GET** | `/api/v1/tasks/:id` | Logged In | Get single task details |
+| **PUT** | `/api/v1/tasks/:id` | Logged In | Update task details |
+| **DELETE** | `/api/v1/tasks/:id` | Logged In | Delete task |
+| **GET** | `/api/v1/users` | Admin Only | List all registered system users |
+| **PUT** | `/api/v1/users/:id/role` | Admin Only | Modify user role access. Body: `{ role: 'admin'/'user' }` |
